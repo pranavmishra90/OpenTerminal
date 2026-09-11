@@ -1,5 +1,6 @@
 services:
   api:
+    image: ghcr.io/pranavmishra90/openterminal-api:latest
     build:
       context: .
       dockerfile: server/Dockerfile
@@ -8,10 +9,11 @@ services:
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
     volumes:
-      - terminal-data:/app/data
+      - ./terminal-data:/app/data
     restart: unless-stopped
 
   web:
+    image: ghcr.io/pranavmishra90/openterminal-web:latest
     build:
       context: .
       dockerfile: web/Dockerfile
@@ -23,5 +25,5 @@ services:
       - api
     restart: unless-stopped
 
-volumes:
-  terminal-data:
+# volumes:
+#   terminal-data:
