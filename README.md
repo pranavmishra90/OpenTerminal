@@ -11,6 +11,8 @@ Dark. Dense. Keyboard‑driven. Zero paid API keys, zero subscriptions.
 [![No API Key Required](https://img.shields.io/badge/data-no%20API%20key%20required-brightgreen)](#data-sources)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](#contributing)
 
+[![CI](https://github.com/pranavmishra90/OpenTerminal/actions/workflows/ci.yml/badge.svg)](https://github.com/pranavmishra90/OpenTerminal/actions/workflows/ci.yml)
+
 <br/>
 
 <img src="docs/screenshots/dashboard.png" alt="OpenTerminal dashboard — live chart, quote panel, watchlist, news and macro indexes" width="100%" />
