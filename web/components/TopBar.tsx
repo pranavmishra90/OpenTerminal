@@ -11,6 +11,14 @@ type Status = {
   ai: boolean;
 };
 
+const NY_PARTS_FMT = new Intl.DateTimeFormat("en-US", {
+  timeZone: "America/New_York",
+  weekday: "short",
+  hour: "2-digit",
+  minute: "2-digit",
+  hour12: false,
+});
+
 function Clock({ tz, label }: { tz: string; label: string }) {
   const [now, setNow] = useState<Date | null>(null);
   useEffect(() => {
@@ -30,23 +38,32 @@ function Clock({ tz, label }: { tz: string; label: string }) {
 }
 
 function marketStateNY(): { label: string; open: boolean } {
-  const ny = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
-  const day = ny.getDay();
-  const mins = ny.getHours() * 60 + ny.getMinutes();
-  const open = day >= 1 && day <= 5 && mins >= 570 && mins < 960; // 09:30–16:00
-  return { label: open ? "NYSE OPEN" : "NYSE CLOSED", open };
+  const parts = NY_PARTS_FMT.formatToParts(new Date());
+  const weekday = parts.find((p) => p.type === "weekday")?.value ?? "";
+  const hour = Number(parts.find((p) => p.type === "hour")?.value ?? "0");
+  const minute = Number(parts.find((p) => p.type === "minute")?.value ?? "0");
+  const isWeekday = weekday !== "Sat" && weekday !== "Sun";
+  const mins = hour * 60 + minute;
+  const marketOpen = isWeekday && mins >= 570 && mins < 960; // 09:30–16:00
+  return { label: marketOpen ? "NYSE OPEN" : "NYSE CLOSED", open: marketOpen };
 }
 
 export default function TopBar() {
   const setCommandOpen = useTerminal((s) => s.setCommandOpen);
   const activeSymbol = useTerminal((s) => s.activeSymbol);
+  const [market, setMarket] = useState<{ label: string; open: boolean }>({ label: "NYSE —", open: false });
   const { data: status } = useQuery({
     queryKey: ["status"],
     queryFn: () => apiGet<Status>("/api/status"),
     refetchInterval: 30_000,
   });
 
-  const market = marketStateNY();
+  useEffect(() => {
+    setMarket(marketStateNY());
+    const t = setInterval(() => setMarket(marketStateNY()), 60_000);
+    return () => clearInterval(t);
+  }, []);
+
   const healthy = status?.providers.filter((p) => p.ok > 0) ?? [];
 
   return (

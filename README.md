@@ -2,7 +2,7 @@
 
 # OpenTerminal
 
-**A Bloomberg Terminal‑style workspace for the rest of us — built entirely on free, public market data.**
+**A Terminal‑style workspace for the rest of us — built entirely on free, public market data.**
 
 Dark. Dense. Keyboard‑driven. Zero paid API keys, zero subscriptions.
 
@@ -12,6 +12,7 @@ Dark. Dense. Keyboard‑driven. Zero paid API keys, zero subscriptions.
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-ff69b4.svg)](#contributing)
 
 [![CI](https://github.com/pranavmishra90/OpenTerminal/actions/workflows/ci.yml/badge.svg)](https://github.com/pranavmishra90/OpenTerminal/actions/workflows/ci.yml)
+<a href="https://trendshift.io/repositories/215916?utm_source=trendshift-badge&utm_medium=badge&utm_campaign=badge-trendshift-215916" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/215916/daily?language=TypeScript" alt="ErTasselli%2FOpenTerminal | Trendshift" width="250" height="55"/></a>
 
 <br/>
 
@@ -135,6 +136,13 @@ npm run dev
 
 Without a key, everything else still works — the AI widget just shows a friendly "unavailable" message instead of failing.
 
+### Security defaults
+
+- The API binds to `127.0.0.1` and only accepts browser requests from `http://localhost:3000` by default — nothing else on your network can reach it out of the box.
+- The portfolio and AI endpoints require a shared secret. If you don't set `API_KEY` yourself, the API generates one on first run and saves it to `data/.api-key`; the bundled web app reads that file automatically, so local dev stays zero-config.
+- To expose this beyond your own machine, set `API_HOST=0.0.0.0`, `API_KEY=<a-strong-secret>` (on both the api and web processes), and `WEB_ORIGIN=<your actual origin>` explicitly. Don't do this without also keeping dependencies patched — see [Known limitations](#known-limitations) below.
+- The `/api/ai` rate limit (10 req/min) keys on `req.ip`. Calls made through the bundled web proxy all arrive from that proxy's own address, so by default every caller sharing it shares one bucket. If you're serving more than one real user through it, set `TRUST_PROXY=1` on the api process **only if** you also run your own reverse proxy in front of the web service that sets `X-Forwarded-For` from the real client and doesn't let visitors set it themselves — otherwise a caller can forge that header to dodge the limit.
+
 <br/>
 
 ## 🐳 Docker
@@ -143,7 +151,7 @@ Without a key, everything else still works — the AI widget just shows a friend
 docker compose up --build
 ```
 
-Portfolio data persists in the `terminal-data` volume (SQLite, WAL mode).
+Portfolio data persists in the `terminal-data` volume (SQLite, WAL mode). Ports are published on `127.0.0.1` only by default; see [Security defaults](#security-defaults) to expose it deliberately.
 
 <br/>
 
@@ -198,6 +206,13 @@ Pull requests are welcome, especially:
 - Bug fixes and UI polish
 
 Please open an issue first for anything non‑trivial so we can align on approach before you invest the time.
+
+<br/>
+
+## Known limitations
+
+- `npm audit` still flags two dependency advisories this project doesn't force-fix: `fast-xml-parser`'s XMLBuilder injection (moderate) doesn't apply here — only `XMLParser` is used, never `XMLBuilder` — and `postcss`'s high-severity issue is bundled inside Next.js itself, only resolved by a Next 16 major upgrade. Both are tracked, neither is silently ignored.
+- If you deploy behind a reverse proxy or load balancer, set `API_HOST`/`WEB_ORIGIN` to match, and terminate TLS in front of it — this project doesn't handle HTTPS itself.
 
 <br/>
 
